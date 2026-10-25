@@ -94,7 +94,13 @@ FEWSHOT_SEEDS = (1, 2, 3)
 
 
 def sample_fewshot_indices(n_total: int, size: int, seed: int) -> list[int]:
-    return sorted(random.Random(seed).sample(range(n_total), size))
+    """Nested samples: for a given seed, the size-100 sample is a subset of the size-1000 sample.
+
+    One permutation of max(FEWSHOT_SIZES) indices is drawn per seed and each size takes a prefix,
+    so going from 100 to 1,000 sentences only adds data and never swaps it.
+    """
+    perm = random.Random(seed).sample(range(n_total), max(FEWSHOT_SIZES))
+    return sorted(perm[:size])
 
 
 def load_fewshot(size: int, seed: int, processed_dir: str | Path = PROCESSED_DIR) -> list[dict]:

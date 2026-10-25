@@ -38,6 +38,29 @@ def ner_scores(y_true: list[list[str]], y_pred: list[list[str]]) -> dict:
     return out
 
 
+def paired_bootstrap(y_true, pred_a, pred_b, n_resamples: int = 1000, seed: int = 0) -> dict:
+    """Paired bootstrap over sentences for the F1 difference between systems A and B.
+
+    Both systems are scored on the same resampled sentences each round. `p_value` is the
+    one-sided share of rounds where A does not beat B (small = A is reliably better).
+    """
+    kw = dict(mode="strict", scheme=IOB2, zero_division=0)
+    rng = np.random.default_rng(seed)
+    n = len(y_true)
+    deltas = np.empty(n_resamples)
+    for k in range(n_resamples):
+        idx = rng.integers(0, n, n)
+        t = [y_true[i] for i in idx]
+        deltas[k] = f1_score(t, [pred_a[i] for i in idx], **kw) - f1_score(t, [pred_b[i] for i in idx], **kw)
+    lo, hi = np.percentile(deltas, [2.5, 97.5])
+    return {
+        "delta_f1": f1_score(y_true, pred_a, **kw) - f1_score(y_true, pred_b, **kw),
+        "ci95": (float(lo), float(hi)),
+        "p_value": float((deltas <= 0).mean()),
+        "n_resamples": n_resamples,
+    }
+
+
 def compute_metrics(eval_pred) -> dict:
     """`compute_metrics` hook for transformers.Trainer."""
     logits, label_ids = eval_pred

@@ -29,9 +29,10 @@ scripts/
   dataset_stats.py       dataset statistics table
 src/frozenweights/
   data.py                CoNLL reader, label mapping, few-shot loading, sub-word alignment
-  metrics.py             seqeval entity-level P/R/F1 (strict, IOB2), per-type scores
+  metrics.py             seqeval entity-level P/R/F1 (strict, IOB2), per-type scores, paired bootstrap
   models.py              build_model(method) on a shared XLM-R + token-classification head
   cost.py                parameter counts, peak memory, timer, checkpoint size
+tests/                   unit tests (pytest tests/)
 outputs/                 model checkpoints (git-ignored; on Colab this is on Google Drive)
 ```
 
@@ -39,8 +40,11 @@ outputs/                 model checkpoints (git-ignored; on Colab this is on Goo
 
 **Colab (main compute):** open `notebooks/01_baselines.ipynb` in Colab, choose a GPU runtime, and run the cells
 in order. The first cell mounts Drive, clones this repo, and installs `requirements.txt`. Checkpoints go to
-`MyDrive/FrozenWeights/outputs/` so a dropped session doesn't lose them. The repo has to be pushed and readable
-from Colab (public, or clone with a token).
+`MyDrive/FrozenWeights/outputs/` and run results to `MyDrive/FrozenWeights/results/checkpoint1/`, so a dropped
+session doesn't lose them. Nothing needs configuring: just allow the Drive pop-up. The notebook clones the
+pushed `main` branch, so push your changes before running.
+
+Direct link: <https://colab.research.google.com/github/Ande404/FrozenWeights/blob/main/notebooks/01_baselines.ipynb>
 
 **Local:**
 
@@ -55,6 +59,45 @@ jupyter lab notebooks/01_baselines.ipynb
 
 Apple Silicon runs on MPS. That's fine for debugging, but reported numbers should come from Colab so GPU type
 and memory are comparable.
+
+## Methods
+
+Every method starts from the same pretrained **XLM-R base** encoder (~277M parameters) with the same linear
+token-classification head, which maps each word's vector to one of 7 tags (O, B/I-PER, B/I-ORG, B/I-LOC).
+The methods differ only in **which weights training may update**, and that difference is what we are measuring.
+
+| `METHOD` | What is trained | Trainable params | Saved per task | Why it's in the study |
+|---|---|---:|---:|---|
+| `full_ft` | All XLM-R weights + head | 277.5M (100%) | ~1.1 GB | **Upper baseline.** Usually the best accuracy, but every task or language needs its own full model copy. |
+| `head_only` | Only the head; XLM-R frozen | 5,383 (0.002%) | ~21 KB | **Lower baseline.** Shows how much NER information the frozen pretrained vectors already carry. |
+| `lora` | Low-rank updates (r=16) on attention + feed-forward projections, + head; XLM-R frozen | 2.66M (0.95%) | ~10 MB | **Main PEFT method.** Does training ~1% of the parameters get close to `full_ft`? |
+| `qlora` *(planned)* | Same as LoRA, but the frozen encoder is stored in 4-bit | ≈ LoRA | ≈ LoRA | Same idea with much less GPU memory. CUDA only (`bitsandbytes`). |
+| `adapters` *(planned)* | Small bottleneck layers inserted in every transformer block, + head | ~1% | a few MB | The classic PEFT alternative to LoRA (Houlsby et al., 2019; AdapterHub). |
+| `prompt_tuning` *(optional)* | A few learned vectors prepended to the input, + head | < 0.1% | KB | Extreme low-parameter end; often weak on token-level tasks. |
+
+LoRA in one line: for a frozen weight matrix *W* it learns two thin matrices *B* (d × r) and *A* (r × d), so the
+layer computes with *W + B·A*. Only *A* and *B* are trained and saved; *W* is never touched.
+
+**Running a method.** Each method has a config in `configs/<METHOD>.yaml` (learning rate, epochs, batch size,
+LoRA rank, and so on). In the notebook's config cell, set:
+
+```python
+METHOD = "lora"     # full_ft | head_only | lora
+SEED = 1            # we report seeds 1, 2, 3
+MAX_TRAIN = None    # e.g. 500 for a 2-minute smoke test
+```
+
+Then run the remaining cells in order. Each run writes:
+
+- `results/checkpoint1/<METHOD>_seed<SEED>.json`: config, English/Swahili metrics, cost (params, peak memory,
+  time, checkpoint size, GPU), and library versions
+- `results/checkpoint1/<METHOD>_seed<SEED>_sw_test_predictions.jsonl`: Swahili gold vs. predicted tags for error analysis
+- `outputs/<METHOD>_seed<SEED>/`: trainer checkpoints and `trainable.safetensors` (git-ignored)
+
+The learning rate differs by method because frozen-encoder methods train far fewer weights and need larger
+steps (full FT 2e-5, LoRA 5e-4, head-only 1e-3). The search grid for each method is listed in its config file.
+
+Compare methods only on runs from the same GPU type, because time and memory are part of the result.
 
 ## Data
 

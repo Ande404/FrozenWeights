@@ -1,7 +1,8 @@
 """Write the fixed Swahili few-shot samples used in Experiment 2.
 
 For each size in {100, 1000} and seed in {1, 2, 3}, sample sentence indices from the
-MasakhaNER 2.0 Swahili *train* split (never dev/test). The index files are committed so
+MasakhaNER 2.0 Swahili *train* split (never dev/test). Samples are nested: for each seed the
+100-sentence sample is a subset of the 1,000-sentence one. The index files are committed so
 every method sees exactly the same sentences.
 
     data/splits/sw_fewshot_{size}_seed{seed}.json
@@ -29,3 +30,7 @@ if __name__ == "__main__":
             out = SPLITS_DIR / f"sw_fewshot_{size}_seed{seed}.json"
             out.write_text(json.dumps({"size": size, "seed": seed, "source": "sw/train", "entities": dict(ents), "indices": idx}))
             print(f"{out.name}: {dict(sorted(ents.items()))}")
+    for seed in FEWSHOT_SEEDS:
+        small, large = (set(sample_fewshot_indices(len(train), s, seed)) for s in FEWSHOT_SIZES)
+        assert small <= large, f"seed {seed}: samples are not nested"
+    print("nested: ok")

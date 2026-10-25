@@ -14,3 +14,5 @@ matplotlib
 pyyaml
 # QLoRA (4-bit) needs CUDA, so Linux/Colab only
 bitsandbytes; platform_system == "Linux"
+# tests
+pytest
