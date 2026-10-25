@@ -218,3 +218,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- FrozenWeights project ---
+# Raw/processed data is downloaded by scripts/download_data.py (licences don't allow redistribution).
+# data/splits/ (few-shot sample indices) IS committed so every run uses the same samples.
+data/raw/
+data/processed/
+# Model checkpoints and trainer state (large); small metric JSONs live in results/
+outputs/
+.DS_Store

@@ -1,0 +1,11 @@
+# Full fine-tuning baseline: every XLM-R parameter is updated.
+method: full_ft
+model_name: xlm-roberta-base
+max_length: 256
+learning_rate: 2.0e-5        # search grid (Checkpoint 2): [1e-5, 2e-5, 5e-5]
+num_train_epochs: 3
+per_device_train_batch_size: 32
+per_device_eval_batch_size: 64
+warmup_ratio: 0.1
+weight_decay: 0.01
+seeds: [1, 2, 3]

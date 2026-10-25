@@ -1,0 +1,11 @@
+# Head-only baseline: XLM-R frozen, only the linear token-classification layer is trained.
+method: head_only
+model_name: xlm-roberta-base
+max_length: 256
+learning_rate: 1.0e-3        # search grid (Checkpoint 2): [5e-4, 1e-3, 5e-3]
+num_train_epochs: 3
+per_device_train_batch_size: 32
+per_device_eval_batch_size: 64
+warmup_ratio: 0.1
+weight_decay: 0.0
+seeds: [1, 2, 3]

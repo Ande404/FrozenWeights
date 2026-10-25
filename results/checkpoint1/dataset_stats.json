@@ -1,0 +1,155 @@
+{
+  "tokenizer": "xlm-roberta-base",
+  "stats": {
+    "en": {
+      "train": {
+        "sentences": 14041,
+        "words": 203621,
+        "words_per_sentence_mean": 14.501887329962253,
+        "words_per_sentence_max": 113,
+        "entities_original": {
+          "LOC": 7140,
+          "MISC": 3438,
+          "ORG": 6321,
+          "PER": 6600
+        },
+        "entities_mapped": {
+          "PER": 6600,
+          "ORG": 6321,
+          "LOC": 7140
+        },
+        "sentences_with_entity": 10202,
+        "subwords_per_word": 1.4201875052180275,
+        "subwords_per_sentence_p95": 53.0,
+        "subwords_per_sentence_max": 182,
+        "truncated_at_256": 0
+      },
+      "dev": {
+        "sentences": 3250,
+        "words": 51362,
+        "words_per_sentence_mean": 15.803692307692307,
+        "words_per_sentence_max": 109,
+        "entities_original": {
+          "LOC": 1837,
+          "MISC": 922,
+          "ORG": 1341,
+          "PER": 1842
+        },
+        "entities_mapped": {
+          "PER": 1842,
+          "ORG": 1341,
+          "LOC": 1837
+        },
+        "sentences_with_entity": 2412,
+        "subwords_per_word": 1.4226276235349091,
+        "subwords_per_sentence_p95": 56.0,
+        "subwords_per_sentence_max": 157,
+        "truncated_at_256": 0
+      },
+      "test": {
+        "sentences": 3453,
+        "words": 46435,
+        "words_per_sentence_mean": 13.447726614538082,
+        "words_per_sentence_max": 124,
+        "entities_original": {
+          "LOC": 1668,
+          "MISC": 702,
+          "ORG": 1661,
+          "PER": 1617
+        },
+        "entities_mapped": {
+          "PER": 1617,
+          "ORG": 1661,
+          "LOC": 1668
+        },
+        "sentences_with_entity": 2541,
+        "subwords_per_word": 1.4272423818240552,
+        "subwords_per_sentence_p95": 51.0,
+        "subwords_per_sentence_max": 162,
+        "truncated_at_256": 0
+      }
+    },
+    "sw": {
+      "train": {
+        "sentences": 6593,
+        "words": 175160,
+        "words_per_sentence_mean": 26.56757166691946,
+        "words_per_sentence_max": 107,
+        "entities_original": {
+          "DATE": 2270,
+          "LOC": 6111,
+          "ORG": 2327,
+          "PER": 3875
+        },
+        "entities_mapped": {
+          "PER": 3875,
+          "ORG": 2327,
+          "LOC": 6111
+        },
+        "sentences_with_entity": 5039,
+        "subwords_per_word": 1.5112354418817082,
+        "subwords_per_sentence_p95": 77.0,
+        "subwords_per_sentence_max": 173,
+        "truncated_at_256": 0
+      },
+      "dev": {
+        "sentences": 942,
+        "words": 25251,
+        "words_per_sentence_mean": 26.805732484076433,
+        "words_per_sentence_max": 73,
+        "entities_original": {
+          "DATE": 304,
+          "LOC": 813,
+          "ORG": 337,
+          "PER": 564
+        },
+        "entities_mapped": {
+          "PER": 564,
+          "ORG": 337,
+          "LOC": 813
+        },
+        "sentences_with_entity": 714,
+        "subwords_per_word": 1.5147914934062017,
+        "subwords_per_sentence_p95": 75.0,
+        "subwords_per_sentence_max": 113,
+        "truncated_at_256": 0
+      },
+      "test": {
+        "sentences": 1883,
+        "words": 51179,
+        "words_per_sentence_mean": 27.179500796601168,
+        "words_per_sentence_max": 73,
+        "entities_original": {
+          "DATE": 598,
+          "LOC": 1924,
+          "ORG": 628,
+          "PER": 1180
+        },
+        "entities_mapped": {
+          "PER": 1180,
+          "ORG": 628,
+          "LOC": 1924
+        },
+        "sentences_with_entity": 1474,
+        "subwords_per_word": 1.5000488481603782,
+        "subwords_per_sentence_p95": 77.0,
+        "subwords_per_sentence_max": 110,
+        "truncated_at_256": 0
+      }
+    }
+  },
+  "sw_test_entity_overlap_with_en_train": {
+    "PER": {
+      "seen": 15,
+      "total": 483
+    },
+    "ORG": {
+      "seen": 16,
+      "total": 242
+    },
+    "LOC": {
+      "seen": 123,
+      "total": 394
+    }
+  }
+}
