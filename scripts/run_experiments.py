@@ -32,7 +32,7 @@ METHODS = ["full_ft", "head_only", "lora"]
 SEEDS = [1, 2, 3]
 TUNE_GRID = {  # same grids as the comments in configs/*.yaml
     "full_ft": [1e-5, 2e-5, 5e-5],
-    "head_only": [5e-4, 1e-3, 5e-3],
+    "head_only": [5e-4, 1e-3, 5e-3, 1e-2],
     "lora": [1e-4, 5e-4, 1e-3],
 }
 TIE_MARGIN = 0.2  # English-dev F1 points: within this of the best, keep the config default
