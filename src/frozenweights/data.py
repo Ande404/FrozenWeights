@@ -110,6 +110,22 @@ def load_fewshot(size: int, seed: int, processed_dir: str | Path = PROCESSED_DIR
     return [train[i] for i in idx]
 
 
+# setting name -> number of Swahili training sentences mixed into English train
+SETTINGS = {"zs": 0, "fs100": 100, "fs1000": 1000}
+SETTING_LABELS = {"zs": "zero-shot", "fs100": "few-shot-100", "fs1000": "few-shot-1000"}
+
+
+def training_rows(setting: str, seed: int, max_train: int | None = None,
+                  processed_dir: str | Path = PROCESSED_DIR) -> list[dict]:
+    """English train, plus the seed's fixed Swahili sample for few-shot settings (one mixed set;
+    the Trainer shuffles it). Training seed s always uses Swahili sample s."""
+    rows = load_split("en", "train", processed_dir)
+    if max_train:
+        rows = rows[:max_train]
+    n = SETTINGS[setting]
+    return rows + (load_fewshot(n, seed, processed_dir) if n else [])
+
+
 # --------------------------------------------------------------------------- tokenization
 
 def tokenize_and_align(rows: list[dict], tokenizer, max_length: int = 256) -> dict:

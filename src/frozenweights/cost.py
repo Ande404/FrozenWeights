@@ -34,8 +34,14 @@ def device_name() -> str:
     return f"CPU ({platform.processor() or platform.machine()})"
 
 
+def _logical_numel(p) -> int:
+    # bitsandbytes 4-bit weights are packed two per byte; quant_state keeps the original shape.
+    qs = getattr(p, "quant_state", None)
+    return qs.shape.numel() if qs is not None and hasattr(qs, "shape") else p.numel()
+
+
 def count_parameters(model) -> dict:
-    total = sum(p.numel() for p in model.parameters())
+    total = sum(_logical_numel(p) for p in model.parameters())
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     return {"total_params": total, "trainable_params": trainable, "trainable_pct": 100 * trainable / total}
 

@@ -1,0 +1,91 @@
+{
+  "run": "full_ft_seed1",
+  "method": "full_ft",
+  "seed": 1,
+  "setting": "zero-shot",
+  "config": {
+    "method": "full_ft",
+    "model_name": "xlm-roberta-base",
+    "max_length": 256,
+    "learning_rate": 2e-05,
+    "num_train_epochs": 3,
+    "per_device_train_batch_size": 32,
+    "per_device_eval_batch_size": 64,
+    "warmup_ratio": 0.1,
+    "weight_decay": 0.01,
+    "seeds": [
+      1,
+      2,
+      3
+    ]
+  },
+  "max_train": null,
+  "best_epoch_en_dev": 3.0,
+  "cost": {
+    "total_params": 277458439,
+    "trainable_params": 277458439,
+    "trainable_pct": 100.0,
+    "peak_memory_gb": 5.582177639007568,
+    "train_time_min": 3.373597361900003,
+    "checkpoint_mb": 1058.4428520202637,
+    "device": "Tesla T4",
+    "train_steps": 1317
+  },
+  "metrics": {
+    "en_dev": {
+      "precision": 0.9526545166402536,
+      "recall": 0.9579681274900398,
+      "f1": 0.9553039332538737,
+      "PER_precision": 0.9692058346839546,
+      "PER_recall": 0.9739413680781759,
+      "PER_f1": 0.9715678310316817,
+      "PER_support": 1842,
+      "ORG_precision": 0.911504424778761,
+      "ORG_recall": 0.9217002237136466,
+      "ORG_f1": 0.9165739710789765,
+      "ORG_support": 1341,
+      "LOC_precision": 0.9663226507332972,
+      "LOC_recall": 0.9684267827980403,
+      "LOC_f1": 0.967373572593801,
+      "LOC_support": 1837
+    },
+    "en_test": {
+      "precision": 0.9198961246504195,
+      "recall": 0.931055398301658,
+      "f1": 0.9254421221864951,
+      "PER_precision": 0.9592340951204448,
+      "PER_recall": 0.9604205318491033,
+      "PER_f1": 0.9598269468479604,
+      "PER_support": 1617,
+      "ORG_precision": 0.8735431235431236,
+      "ORG_recall": 0.9024683925346177,
+      "ORG_f1": 0.8877702102457802,
+      "ORG_support": 1661,
+      "LOC_precision": 0.9293836026331538,
+      "LOC_recall": 0.9310551558752997,
+      "LOC_f1": 0.9302186283318358,
+      "LOC_support": 1668
+    },
+    "sw_test": {
+      "precision": 0.8243547982961664,
+      "recall": 0.8815648445873526,
+      "f1": 0.8520005179334456,
+      "PER_precision": 0.8821656050955414,
+      "PER_recall": 0.9389830508474576,
+      "PER_f1": 0.909688013136289,
+      "PER_support": 1180,
+      "ORG_precision": 0.5774155995343423,
+      "ORG_recall": 0.7898089171974523,
+      "ORG_f1": 0.6671149966375253,
+      "ORG_support": 628,
+      "LOC_precision": 0.8987206823027718,
+      "LOC_recall": 0.8762993762993763,
+      "LOC_f1": 0.8873684210526316,
+      "LOC_support": 1924
+    }
+  },
+  "versions": {
+    "torch": "2.11.0+cu130",
+    "transformers": "4.57.6"
+  }
+}

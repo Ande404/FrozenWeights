@@ -21,9 +21,14 @@ data/
   processed/{en,sw}/     train/dev/test.jsonl, shared labels (git-ignored)
   splits/                fixed Swahili few-shot sample indices (committed)
 notebooks/
-  01_baselines.ipynb     full fine-tuning / head-only, run cell by cell (Colab or local)
-results/checkpoint1/     dataset stats, per-run metric + cost JSON, Swahili predictions
+  01_baselines.ipynb     one method / one seed, run cell by cell (Checkpoint 1)
+  02_checkpoint2_experiments.ipynb   LR search + 3 seeds, zero-shot, 3 methods (Checkpoint 2, T4)
+  03_checkpoint3_experiments.ipynb   everything: 5 methods x 3 settings x 3 seeds (Checkpoint 3, A100)
+results/
+  checkpoint1/           dataset stats; Checkpoint 1 single-seed runs (T4)
+  checkpoint3/           Checkpoint 3 runs: per-run JSON, Swahili predictions, logs, summary tables
 scripts/
+  run_experiments.py     experiment runner: smoke / tune / final / table / all (resumable)
   download_data.py       fetch + convert both datasets
   make_fewshot_splits.py write data/splits/*.json
   dataset_stats.py       dataset statistics table
@@ -33,7 +38,7 @@ src/frozenweights/
   models.py              build_model(method) on a shared XLM-R + token-classification head
   cost.py                parameter counts, peak memory, timer, checkpoint size
 tests/                   unit tests (pytest tests/)
-outputs/                 model checkpoints (git-ignored; on Colab this is on Google Drive)
+outputs/                 model checkpoints (git-ignored)
 ```
 
 ## Setup
@@ -71,8 +76,8 @@ The methods differ only in **which weights training may update**, and that diffe
 | `full_ft` | All XLM-R weights + head | 277.5M (100%) | ~1.1 GB | **Upper baseline.** Usually the best accuracy, but every task or language needs its own full model copy. |
 | `head_only` | Only the head; XLM-R frozen | 5,383 (0.002%) | ~21 KB | **Lower baseline.** Shows how much NER information the frozen pretrained vectors already carry. |
 | `lora` | Low-rank updates (r=16) on attention + feed-forward projections, + head; XLM-R frozen | 2.66M (0.95%) | ~10 MB | **Main PEFT method.** Does training ~1% of the parameters get close to `full_ft`? |
-| `qlora` *(planned)* | Same as LoRA, but the frozen encoder is stored in 4-bit | ≈ LoRA | ≈ LoRA | Same idea with much less GPU memory. CUDA only (`bitsandbytes`). |
-| `adapters` *(planned)* | Small bottleneck layers inserted in every transformer block, + head | ~1% | a few MB | The classic PEFT alternative to LoRA (Houlsby et al., 2019; AdapterHub). |
+| `qlora` | Same LoRA, on an encoder whose linear layers are stored in 4-bit NF4; head in full precision | 2.66M (0.95%) | ~10 MB | Does quantizing the frozen encoder save memory without hurting F1? CUDA only (`bitsandbytes`). Embeddings (~190M of the 278M weights) are not linear layers, so they stay unquantized. |
+| `adapters` | Two bottleneck adapters per layer (768→48→768, Houlsby layout via AdapterHub `DoubleSeqBnConfig`), + head | 1.79M (0.64%) | ~7 MB | The classic PEFT alternative to LoRA (Houlsby et al., 2019). |
 | `prompt_tuning` *(optional)* | A few learned vectors prepended to the input, + head | < 0.1% | KB | Extreme low-parameter end; often weak on token-level tasks. |
 
 LoRA in one line: for a frozen weight matrix *W* it learns two thin matrices *B* (d × r) and *A* (r × d), so the
@@ -95,9 +100,35 @@ Then run the remaining cells in order. Each run writes:
 - `outputs/<METHOD>_seed<SEED>/`: trainer checkpoints and `trainable.safetensors` (git-ignored)
 
 The learning rate differs by method because frozen-encoder methods train far fewer weights and need larger
-steps (full FT 2e-5, LoRA 5e-4, head-only 1e-3). The search grid for each method is listed in its config file.
+steps. The values in `configs/` are the ones chosen on English dev (full FT 5e-5, head-only 1e-2, LoRA 5e-4 at
+Checkpoint 2; QLoRA and adapters are tuned by the Checkpoint 3 run). Each config lists its search grid.
 
 Compare methods only on runs from the same GPU type, because time and memory are part of the result.
+
+## Running experiments (`scripts/run_experiments.py`)
+
+The notebooks above are for stepping through one run. For the real experiments use the runner, which trains,
+evaluates and logs every run, and skips runs whose result file already exists (safe to re-run after a
+Colab disconnect):
+
+```bash
+python scripts/run_experiments.py --phase all --results-dir RESULTS_DIR    # the whole Checkpoint 3 grid
+python scripts/run_experiments.py --phase tune  --methods qlora            # LR search on English dev
+python scripts/run_experiments.py --phase final --methods lora --settings zs fs100 fs1000 --seeds 1 2 3
+python scripts/run_experiments.py --phase table --methods full_ft head_only lora qlora adapters --results-dir RESULTS_DIR
+```
+
+- **Settings:** `zs` = English train only; `fs100` / `fs1000` = English train plus the fixed Swahili sample of
+  that size whose seed equals the training seed (`data/splits/`). Model selection is always on English dev.
+- **Run names:** `<method>_seed<N>` (zero-shot), `<method>_<setting>_seed<N>` (few-shot), `tune_<method>_lr<LR>_seed1`.
+- **Each run writes** `<name>.json` (config, setting, metrics on English dev/test and Swahili test, cost: params,
+  peak GPU memory, weight footprint, training time, saved-weights size, GPU) and `<name>_sw_test_predictions.jsonl`.
+  The results folder also gets `progress.log`, `failures.log`, `chosen_lrs.json` and `summary_all_settings.csv`.
+- The runner refuses to train without a CUDA GPU (`--allow-cpu` is for debugging only); `--max-train` and
+  `--max-eval` cap the data for quick checks.
+
+**Checkpoint 3 on Colab:** open `notebooks/03_checkpoint3_experiments.ipynb`, choose an A100 runtime, run cells
+1 and 2, then cell 5 to download `checkpoint3_results.zip`, and unzip it into `results/checkpoint3/`.
 
 ## Data
 

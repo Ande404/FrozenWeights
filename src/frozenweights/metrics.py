@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 from seqeval.metrics import classification_report, f1_score, precision_score, recall_score
-from seqeval.scheme import IOB2
+from seqeval.scheme import IOB2, Entities
 
 from .data import ENTITY_TYPES, ID2LABEL
 
@@ -44,17 +44,23 @@ def paired_bootstrap(y_true, pred_a, pred_b, n_resamples: int = 1000, seed: int 
     Both systems are scored on the same resampled sentences each round. `p_value` is the
     one-sided share of rounds where A does not beat B (small = A is reliably better).
     """
-    kw = dict(mode="strict", scheme=IOB2, zero_division=0)
-    rng = np.random.default_rng(seed)
-    n = len(y_true)
-    deltas = np.empty(n_resamples)
-    for k in range(n_resamples):
-        idx = rng.integers(0, n, n)
-        t = [y_true[i] for i in idx]
-        deltas[k] = f1_score(t, [pred_a[i] for i in idx], **kw) - f1_score(t, [pred_b[i] for i in idx], **kw)
+    # Strict entity sets are extracted once; each resample only re-sums per-sentence counts,
+    # which gives the same F1 as seqeval's strict mode at a fraction of the cost.
+    def counts(pred):
+        gold_e, pred_e = Entities(y_true, IOB2).entities, Entities(pred, IOB2).entities
+        tp = np.array([len({e.to_tuple() for e in g} & {e.to_tuple() for e in p}) for g, p in zip(gold_e, pred_e)])
+        return tp, np.array([len(p) for p in pred_e]), np.array([len(g) for g in gold_e])
+
+    def f1(tp, n_pred, n_gold):
+        tp, n_pred, n_gold = tp.sum(-1), n_pred.sum(-1), n_gold.sum(-1)
+        return np.where(n_pred + n_gold > 0, 2 * tp / np.maximum(n_pred + n_gold, 1), 0.0)
+
+    a, b = counts(pred_a), counts(pred_b)
+    idx = np.random.default_rng(seed).integers(0, len(y_true), (n_resamples, len(y_true)))
+    deltas = f1(*(x[idx] for x in a)) - f1(*(x[idx] for x in b))
     lo, hi = np.percentile(deltas, [2.5, 97.5])
     return {
-        "delta_f1": f1_score(y_true, pred_a, **kw) - f1_score(y_true, pred_b, **kw),
+        "delta_f1": float(f1(*a) - f1(*b)),
         "ci95": (float(lo), float(hi)),
         "p_value": float((deltas <= 0).mean()),
         "n_resamples": n_resamples,
